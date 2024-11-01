@@ -14,6 +14,8 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            font-size: 24px; /* Tamanho padrão da fonte */
+            transition: background-color 0.3s, color 0.3s; /* Transição suave */
         }
 
         #gameContainer {
@@ -29,14 +31,9 @@
             transition: filter 0.3s; /* Transição para o desfoque */
         }
 
-        #gameContainer.blur {
-            filter: blur(5px); /* Desfoque aplicado quando o modal está aberto */
-        }
-
-        #menuButton {
+        #menuButton,
+        #hintButton {
             position: absolute;
-            top: 20px;
-            left: 20px;
             width: 55px;
             height: 55px;
             background-color: #fff;
@@ -48,6 +45,16 @@
             cursor: pointer;
             font-size: 24px;
             color: rgba(80, 196, 235, 0.6);
+        }
+
+        #menuButton {
+            top: 20px;
+            left: 20px;
+        }
+
+        #hintButton {
+            bottom: 20px;
+            right: 20px;
         }
 
         #gameArea {
@@ -67,7 +74,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #333;
+            background: linear-gradient(to bottom, #ffffff, #d5fbff); /* Degradê azul e branco */
             color: #fff;
             font-size: 48px;
             border-radius: 10px;
@@ -126,11 +133,12 @@
 
         #modalContent {
             width: 300px;
-            padding: 20px;
-            background-color: #fff;
+            padding: 25px;
+            background-color:rgba(255, 255, 255, 0.7);
+            
             border-radius: 10px;
             text-align: center;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0px 4px 10px rgba(163, 238, 248, 0.3);
         }
 
         #modalTitle {
@@ -168,8 +176,8 @@
         /* Estilos de acessibilidade */
         #fontSizeControls {
             display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
+            justify-content: center;
+            margin: 2px 0;
         }
 
         #fontSizeControls button {
@@ -177,8 +185,23 @@
             cursor: pointer;
         }
 
+        #fontSizeControls button#btnDecreaseFont {
+            margin-right: 10px; /* Adiciona espaço entre os botões */
+        }
+
         .high-contrast {
             background-color: #000;
+            color: #fff;
+        }
+
+        .high-contrast .card {
+            background: linear-gradient(to bottom, #333, #555);
+            color: #fff;
+        }
+
+        .high-contrast #scoreBoard,
+        .high-contrast #modalContent {
+            background-color: rgba(255, 255, 255, 0.2);
             color: #fff;
         }
     </style>
@@ -186,6 +209,7 @@
 
 <body>
     <div id="menuButton">&#9776;</div>
+    <div id="hintButton">&#128161;</div>
     <div id="gameContainer">
         <div id="scoreBoard">Pontos: 0</div>
         <div id="gameArea"></div>
@@ -196,14 +220,16 @@
     <div id="modal">
         <div id="modalContent">
             <div id="modalTitle">Jogo da Memória</div>
-            <div id="fontSizeControls">
+           
+            <button id="btnContinue">Continuar</button>
+            <button id="btnReload">Recarregar</button>
+            <button id="btnExit">Sair do Jogo</button>
+            <p></p>
+             <div id="fontSizeControls">
                 <button id="btnDecreaseFont">A-</button>
                 <button id="btnIncreaseFont">A+</button>
             </div>
             <button id="btnHighContrast">Ativar Alto Contraste</button>
-            <button id="btnContinue">Continuar</button>
-            <button id="btnReload">Recarregar</button>
-            <button id="btnExit">Sair do Jogo</button>
         </div>
     </div>
 
@@ -212,6 +238,7 @@
         const messageDisplay = document.getElementById('message');
         const scoreBoard = document.getElementById('scoreBoard');
         const menuButton = document.getElementById('menuButton');
+        const hintButton = document.getElementById('hintButton');
         const modal = document.getElementById('modal');
         const gameContainer = document.getElementById('gameContainer');
         const btnExit = document.getElementById('btnExit');
@@ -226,6 +253,7 @@
         let score = 0;
         let fontSize = 24;
         let isHighContrast = false;
+        let hintTimeout;
 
         const cardIcons = ['🐞', '🦋', '🐌', '🐬', '🐸'];
         let cardsArray = [...cardIcons, ...cardIcons];
@@ -327,11 +355,19 @@
         btnIncreaseFont.addEventListener('click', () => {
             fontSize += 2;
             document.body.style.fontSize = fontSize + 'px';
+            scoreBoard.style.fontSize = fontSize + 'px';
+            btnContinue.style.fontSize = fontSize + 'px';
+            btnReload.style.fontSize = fontSize + 'px';
+            btnExit.style.fontSize = fontSize + 'px';
         });
 
         btnDecreaseFont.addEventListener('click', () => {
             fontSize = Math.max(fontSize - 2, 12); // Para não diminuir abaixo de 12px
             document.body.style.fontSize = fontSize + 'px';
+            scoreBoard.style.fontSize = fontSize + 'px';
+            btnContinue.style.fontSize = fontSize + 'px';
+            btnReload.style.fontSize = fontSize + 'px';
+            btnExit.style.fontSize = fontSize + 'px';
         });
 
         btnHighContrast.addEventListener('click', () => {
@@ -344,6 +380,29 @@
                 btnHighContrast.textContent = 'Ativar Alto Contraste';
             }
         });
+
+        hintButton.addEventListener('click', () => {
+            showHint();
+        });
+
+        function showHint() {
+            const cards = Array.from(document.querySelectorAll('.card'));
+            const hiddenCards = cards.filter(card => !card.classList.contains('flip'));
+            if (hiddenCards.length > 1) {
+                const randomCards = hiddenCards.sort(() => 0.5 - Math.random()).slice(0, 10);
+                randomCards.forEach(card => {
+                    card.classList.add('flip');
+                    card.textContent = card.dataset.icon;
+                });
+
+                hintTimeout = setTimeout(() => {
+                    randomCards.forEach(card => {
+                        card.classList.remove('flip');
+                        card.textContent = '';
+                    });
+                }, 2000);
+            }
+        }
 
         createCards();
     </script>
