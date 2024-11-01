@@ -24,10 +24,30 @@
             justify-content: center;
             align-items: center;
             background-color: rgba(80, 196, 235, 0.6);
-            /* Fundo azul claro com 60% de transparência */
             border-radius: 20px;
-            /* Arredondamento das bordas do contêiner */
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            transition: filter 0.3s; /* Transição para o desfoque */
+        }
+
+        #gameContainer.blur {
+            filter: blur(5px); /* Desfoque aplicado quando o modal está aberto */
+        }
+
+        #menuButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 55px;
+            height: 55px;
+            background-color: #fff;
+            border-radius: 50%;
+            box-shadow: 0px 2px 5px rgba(80, 196, 235, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 24px;
+            color: rgba(80, 196, 235, 0.6);
         }
 
         #gameArea {
@@ -89,21 +109,92 @@
             z-index: 10;
             color: #333;
         }
+
+        /* Estilos para o modal */
+        #modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+
+        #modalContent {
+            width: 300px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #modalTitle {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+
+        #modalContent button {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #btnContinue {
+            background-color: #2ecc71;
+            color: #fff;
+        }
+
+        #btnReload {
+            background-color: #3498db;
+            color: #fff;
+        }
+
+        #btnExit {
+            background-color: #e74c3c;
+            color: #fff;
+        }
     </style>
 </head>
 
 <body>
+    <div id="menuButton">&#9776;</div>
     <div id="gameContainer">
-
         <div id="scoreBoard">Pontos: 0</div>
         <div id="gameArea"></div>
         <div id="message"></div>
+    </div>
+
+    <!-- Modal de opções -->
+    <div id="modal">
+        <div id="modalContent">
+            <div id="modalTitle">Jogo da Memória</div>
+            <button id="btnContinue">Continuar</button>
+            <button id="btnReload">Recarregar</button>
+            <button id="btnExit">Sair do Jogo</button>
+        </div>
     </div>
 
     <script>
         const gameArea = document.getElementById('gameArea');
         const messageDisplay = document.getElementById('message');
         const scoreBoard = document.getElementById('scoreBoard');
+        const menuButton = document.getElementById('menuButton');
+        const modal = document.getElementById('modal');
+        const gameContainer = document.getElementById('gameContainer');
+        const btnExit = document.getElementById('btnExit');
+        const btnReload = document.getElementById('btnReload');
+        const btnContinue = document.getElementById('btnContinue');
         let flippedCards = [];
         let matchedPairs = 0;
         let score = 0;
@@ -142,7 +233,7 @@
             const [card1, card2] = flippedCards;
             if (card1.dataset.icon === card2.dataset.icon) {
                 matchedPairs++;
-                score += 1; // Adiciona pontos por cada par correto
+                score += 1;
                 flippedCards = [];
                 scoreBoard.textContent = `Pontos: ${score}`;
 
@@ -176,6 +267,34 @@
             messageDisplay.style.display = 'none';
             gameArea.removeEventListener('click', restartGame);
         }
+
+        // Funções do Modal
+        menuButton.addEventListener('click', () => {
+            modal.style.display = 'flex';
+            gameContainer.classList.add('blur');
+        });
+
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                gameContainer.classList.remove('blur');
+            }
+        });
+
+        btnExit.addEventListener('click', () => {
+            window.location.href = 'pagina_inicial.html';
+        });
+
+        btnReload.addEventListener('click', () => {
+            restartGame();
+            modal.style.display = 'none';
+            gameContainer.classList.remove('blur');
+        });
+
+        btnContinue.addEventListener('click', () => {
+            modal.style.display = 'none';
+            gameContainer.classList.remove('blur');
+        });
 
         createCards();
     </script>
